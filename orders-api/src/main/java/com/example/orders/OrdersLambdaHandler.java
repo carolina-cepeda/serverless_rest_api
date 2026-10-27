@@ -16,15 +16,24 @@ public class OrdersLambdaHandler implements RequestHandler<APIGatewayProxyReques
 
   @Override
   public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
-    String httpMethod = input.getHttpMethod();
-    String path = input.getPath();
-
     APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
     Map<String, String> headers = new HashMap<>();
     headers.put("Content-Type", "application/json");
     response.setHeaders(headers);
 
     try {
+      if (input == null) {
+        response.setStatusCode(400);
+        response.setBody(gson.toJson(new ErrorResponse("INVALID_REQUEST", "null event")));
+        return response;
+      }
+      String httpMethod = input.getHttpMethod();
+      String path = input.getPath();
+      if (httpMethod == null) httpMethod = "";
+      if (path == null) path = "";
+
+      System.out.println("INVOKE method=" + httpMethod + " path=" + path + " body=" + input.getBody());
+
       if ("POST".equals(httpMethod) && "/orders".equals(path)) {
         CreateOrderRequest request = gson.fromJson(input.getBody(), CreateOrderRequest.class);
         Order order = orderService.createOrder(request);
@@ -82,9 +91,10 @@ public class OrdersLambdaHandler implements RequestHandler<APIGatewayProxyReques
       response.setStatusCode(400);
       response.setBody(gson.toJson(new ErrorResponse("INVALID_REQUEST", e.getMessage())));
       return response;
-    } catch (Exception e) {
+    } catch (Throwable e) {
       response.setStatusCode(500);
-      response.setBody(gson.toJson(new ErrorResponse("INTERNAL_ERROR", "Unexpected internal error")));
+      String msg = e.getClass().getName() + ": " + (e.getMessage() == null ? "" : e.getMessage());
+      response.setBody(gson.toJson(new ErrorResponse("INTERNAL_ERROR", msg)));
       return response;
     }
   }
