@@ -2,11 +2,12 @@ package com.example.orders;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import com.amazonaws.services.lambda.events.APIGatewayProxyRequestEvent;
-import com.amazonaws.services.lambda.events.APIGatewayProxyResponseEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.google.gson.Gson;
 
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class OrdersLambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
@@ -19,7 +20,9 @@ public class OrdersLambdaHandler implements RequestHandler<APIGatewayProxyReques
     String path = input.getPath();
 
     APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
-    response.setHeaders(Collections.singletonMap("Content-Type", "application/json"));
+    Map<String, String> headers = new HashMap<>();
+    headers.put("Content-Type", "application/json");
+    response.setHeaders(headers);
 
     try {
       if ("POST".equals(httpMethod) && "/orders".equals(path)) {

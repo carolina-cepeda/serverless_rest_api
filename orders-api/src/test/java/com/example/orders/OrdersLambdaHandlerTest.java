@@ -3,39 +3,16 @@ package com.example.orders;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.amazonaws.services.lambda.events.APIGatewayProxyRequestEvent;
-import com.amazonaws.services.lambda.events.APIGatewayProxyResponseEvent;
-import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class OrdersLambdaHandlerTest {
 
-  private OrdersLambdaHandler handler;
-  private Gson gson;
-  private Context context;
-
-  @BeforeEach
-  void setUp() {
-    handler = new OrdersLambdaHandler();
-    gson = new Gson();
-    context = new Context() {
-      @Override public String getAwsRequestId() { return "test"; }
-      @Override public String getLogGroupName() { return "test"; }
-      @Override public String getLogStreamName() { return "test"; }
-      @Override public String getFunctionName() { return "test"; }
-      @Override public String getFunctionVersion() { return "1"; }
-      @Override public String getInvokedFunctionArn() { return "arn:test"; }
-      @Override public Integer getMemoryLimitInMB() { return 128; }
-      @Override public Integer getRemainingTimeInMillis() { return 10000; }
-      @Override public void log(String msg) { }
-      @Override public void log(byte[] bytes) { }
-      @Override public com.amazonaws.services.lambda.runtime.ClientContext getClientContext() { return null; }
-      @Override public com.amazonaws.services.lambda.runtime.CognitoIdentity getIdentity() { return null; }
-    };
-  }
+  private final OrdersLambdaHandler handler = new OrdersLambdaHandler();
+  private final Gson gson = new Gson();
 
   @Test
   void postCreateOrderReturns201() {
@@ -44,7 +21,7 @@ class OrdersLambdaHandlerTest {
     event.setPath("/orders");
     event.setBody("{\"customerId\":\"CUST-42\",\"product\":\"MacBook Air\",\"quantity\":1}");
 
-    APIGatewayProxyResponseEvent res = handler.handleRequest(event, context);
+    APIGatewayProxyResponseEvent res = handler.handleRequest(event, null);
 
     assertEquals(201, res.getStatusCode());
     JsonObject body = gson.fromJson(res.getBody(), JsonObject.class);
@@ -59,13 +36,13 @@ class OrdersLambdaHandlerTest {
     create.setHttpMethod("POST");
     create.setPath("/orders");
     create.setBody("{\"customerId\":\"CUST-42\",\"product\":\"MacBook Air\",\"quantity\":1}");
-    handler.handleRequest(create, context);
+    handler.handleRequest(create, null);
 
     APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
     event.setHttpMethod("GET");
     event.setPath("/orders/ORD-001");
 
-    APIGatewayProxyResponseEvent res = handler.handleRequest(event, context);
+    APIGatewayProxyResponseEvent res = handler.handleRequest(event, null);
     assertEquals(200, res.getStatusCode());
     JsonObject body = gson.fromJson(res.getBody(), JsonObject.class);
     assertEquals("ORD-001", body.get("id").getAsString());
@@ -77,7 +54,7 @@ class OrdersLambdaHandlerTest {
     event.setHttpMethod("GET");
     event.setPath("/orders/ORD-999");
 
-    APIGatewayProxyResponseEvent res = handler.handleRequest(event, context);
+    APIGatewayProxyResponseEvent res = handler.handleRequest(event, null);
     assertEquals(404, res.getStatusCode());
     JsonObject body = gson.fromJson(res.getBody(), JsonObject.class);
     assertEquals("ORDER_NOT_FOUND", body.get("error").getAsString());
@@ -90,20 +67,20 @@ class OrdersLambdaHandlerTest {
     create1.setHttpMethod("POST");
     create1.setPath("/orders");
     create1.setBody("{\"customerId\":\"CUST-42\",\"product\":\"MacBook Air\",\"quantity\":1}");
-    handler.handleRequest(create1, context);
+    handler.handleRequest(create1, null);
 
     APIGatewayProxyRequestEvent create2 = new APIGatewayProxyRequestEvent();
     create2.setHttpMethod("POST");
     create2.setPath("/orders");
     create2.setBody("{\"customerId\":\"CUST-42\",\"product\":\"Keyboard\",\"quantity\":2}");
-    handler.handleRequest(create2, context);
+    handler.handleRequest(create2, null);
 
     APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
     event.setHttpMethod("GET");
     event.setPath("/orders");
     event.setQueryStringParameters(java.util.Collections.singletonMap("customerId", "CUST-42"));
 
-    APIGatewayProxyResponseEvent res = handler.handleRequest(event, context);
+    APIGatewayProxyResponseEvent res = handler.handleRequest(event, null);
     assertEquals(200, res.getStatusCode());
     assertTrue(res.getBody().contains("CUST-42"));
   }
@@ -115,7 +92,7 @@ class OrdersLambdaHandlerTest {
     event.setPath("/orders");
     event.setBody("{\"customerId\":\"\",\"product\":\"X\",\"quantity\":0}");
 
-    APIGatewayProxyResponseEvent res = handler.handleRequest(event, context);
+    APIGatewayProxyResponseEvent res = handler.handleRequest(event, null);
     assertEquals(400, res.getStatusCode());
     JsonObject body = gson.fromJson(res.getBody(), JsonObject.class);
     assertEquals("INVALID_REQUEST", body.get("error").getAsString());
@@ -127,13 +104,13 @@ class OrdersLambdaHandlerTest {
     create.setHttpMethod("POST");
     create.setPath("/orders");
     create.setBody("{\"customerId\":\"CUST-42\",\"product\":\"MacBook Air\",\"quantity\":1}");
-    handler.handleRequest(create, context);
+    handler.handleRequest(create, null);
 
     APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
     event.setHttpMethod("DELETE");
     event.setPath("/orders/ORD-001");
 
-    APIGatewayProxyResponseEvent res = handler.handleRequest(event, context);
+    APIGatewayProxyResponseEvent res = handler.handleRequest(event, null);
     assertEquals(204, res.getStatusCode());
   }
 
@@ -143,7 +120,7 @@ class OrdersLambdaHandlerTest {
     event.setHttpMethod("DELETE");
     event.setPath("/orders/ORD-999");
 
-    APIGatewayProxyResponseEvent res = handler.handleRequest(event, context);
+    APIGatewayProxyResponseEvent res = handler.handleRequest(event, null);
     assertEquals(404, res.getStatusCode());
     JsonObject body = gson.fromJson(res.getBody(), JsonObject.class);
     assertEquals("ORDER_NOT_FOUND", body.get("error").getAsString());
